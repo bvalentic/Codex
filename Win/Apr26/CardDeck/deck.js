@@ -5,97 +5,119 @@ class Player {
         this.name = name;
         this.hand = [];
     }
+
+	drawCard(card) {
+		this.hand.push(card);
+	}
+
+	get handSize() {
+		return this.hand.length;
+	}
+
+	toString() {
+		return `${this.name}'s hand: ${this.hand.map(card => card.getDescription()).join(', ')}`;
+	}
 }
 
 class PlayingCard {
 	constructor(suit, rank) {
-	  this.suit = suit;
-	  this.rank = rank;
+		this.suit = suit;
+		this.rank = rank;
 	}
-  
+	
 	// Method for user-friendly card description
 	getDescription() {
-	  return `${this.rank} of ${this.suit}`;
+		return `${this.rank} of ${this.suit}`;
 	}
 }
 
 class Deck {
 	constructor() {
-	  this.suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
-	  this.ranks = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'];
-	  this.cards = this.createDeck();
-      this.cardsRemaining = this.cards.length;
-      this.hands = [];
-	}
+		this.suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
+		this.ranks = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'];
+		this.cards = this.createDeck();
+		this.cardsRemaining = this.cards.length;
+		this.hands = [];
+		}
   
 	// Creates the full deck of 52 cards
 	createDeck() {
-	  const deck = []; 
-	  for (const suit of this.suits) {
-		for (const rank of this.ranks) {
-		  deck.push(new PlayingCard(suit, rank));
+		const deck = []; 
+		for (const suit of this.suits) {
+			for (const rank of this.ranks) {
+			deck.push(new PlayingCard(suit, rank));
+			}
 		}
-	  }
-	  return deck;
+		return deck;
 	}
   
 	// Implements the Fisher-Yates Shuffle algorithm
 	shuffle() {
-	  for (let i = this.cards.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
-	  }
+		for (let i = this.cards.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+		}
 	}
   
 	// Draws the top-most card
 	draw() {
-	  return this.cards.pop();
+	 	return this.cards.pop();
 	}
 
     // Deals cards to players
-    deal(numPlayers, numCardsPerPlayer) {
-        const players = []; // Store each player's hand
+	deal(players, cardsPerPlayer) {
+		if (players.length * cardsPerPlayer > this.size) {
+		  	throw new Error("Not enough cards in the deck");
+		}
+	
+		for (let i = 0; i < cardsPerPlayer; i++) {
+			for (let player of players) {
+				player.drawCard(this.draw());
+			}
+		}
+	}
+}
 
-        // Ensure the deck has enough cards
-        if (numPlayers * numCardsPerPlayer > this.cards.length) {
-            throw new Error("Not enough cards in the deck to deal.");
-        }
-
-        for (let i = 0; i < numPlayers; i++) {
-            const player = new Player(`Player ${i + 1}`);
-            const playerHand = [];
-            for (let j = 0; j < numCardsPerPlayer; j++) {
-                playerHand.push(this.draw()); 
+class TarotDeck extends Deck {
+    constructor() {
+        super();
+        this.cards = [];
+        let suits = ["Wands", "Cups", "Swords", "Pentacles"];
+        let minorArcanaRanks = ["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Page", "Knight", "Queen", "King"];
+    
+        for (let suit of suits) {
+            for (let rank of minorArcanaRanks) {
+                this.cards.push(new PlayingCard(suit, rank));
             }
-            player.hand = playerHand;
-            players.push(player);
         }
-        
-        return players; // Return array of Player objects
+    
+        let majorArcanaRanks = [
+            "The Fool", "The Magician", "The High Priestess", "The Empress", "The Emperor",
+            "The Hierophant", "The Lovers", "The Chariot", "Strength", "The Hermit",
+            "Wheel of Fortune", "Justice", "The Hanged Man", "Death", "Temperance",
+            "The Devil", "The Tower", "The Star", "The Moon", "The Sun", "Judgement",
+            "The World"
+        ];
+    
+        for (let rank of majorArcanaRanks) {
+            this.cards.push(new PlayingCard("Major Arcana", rank));
+        }
     }
 }
 
 export default Deck;
 
-// // Create a new deck
-const myDeck = new Deck();
+let deck = new Deck();
+deck.shuffle();
 
-// // Shuffle the cards
-myDeck.shuffle();
+let player1 = new Player("Alice");
+let player2 = new Player("Bob");
 
-// // Draw a card
-// const topCard = myDeck.draw();
-// console.log("You drew: " + topCard.getDescription());
+deck.deal([player1, player2], 5);
 
-// // Show remaining cards (optional)
-// console.log(myDeck.cards); 
+console.log(player1.toString()); // Outputs: Alice's hand: 8 of Hearts, King of Diamonds, 3 of Clubs, 10 of Spades, 7 of Hearts
+console.log(player2.toString()); // Outputs: Bob's hand: Ace of Spades, 4 of Clubs, 9 of Diamonds, 6 of Clubs, Jack of Spades
 
-// Deal 5 cards to 4 players
-// const hands = myDeck.deal(4, 5);  
-// console.log(hands)
-// console.log(hands[0])
-
-// Get the hand of the first player
-const players = myDeck.deal(4, 5);
-const player1Hand = players[0].hand;
-console.log("Player 1's Hand:", player1Hand); 
+let tarotDeck = new TarotDeck();
+tarotDeck.shuffle();
+console.log(tarotDeck.draw().getDescription()); // Outputs a random tarot card
